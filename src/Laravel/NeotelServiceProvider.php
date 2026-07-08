@@ -5,6 +5,7 @@ namespace Vendor\NeotelWebsocket\Laravel;
 use Illuminate\Support\ServiceProvider;
 use Vendor\NeotelWebsocket\Contracts\WebSocketTransportInterface;
 use Vendor\NeotelWebsocket\Laravel\Console\Commands\NeotelListenCommand;
+use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelCallEventRecorder;
 use Vendor\NeotelWebsocket\NeotelClient;
 use Vendor\NeotelWebsocket\NeotelConfig;
 use Vendor\NeotelWebsocket\Transport\TextalkWebSocketTransport;
@@ -30,6 +31,8 @@ class NeotelServiceProvider extends ServiceProvider
                 $app->make(NeotelConfig::class),
             );
         });
+
+        $this->app->singleton(NeotelCallEventRecorder::class);
     }
 
     public function boot(): void
@@ -41,6 +44,12 @@ class NeotelServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../../config/neotel-websocket.php' => config_path('neotel-websocket.php'),
         ], 'neotel-websocket-config');
+
+        $this->publishes([
+            __DIR__.'/../../database/migrations/' => database_path('migrations'),
+        ], 'neotel-websocket-migrations');
+
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
         $this->commands([
             NeotelListenCommand::class,
