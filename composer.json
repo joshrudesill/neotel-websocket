@@ -24,6 +24,13 @@
     "scripts": {
         "test": "phpunit"
     },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Vendor\\NeotelWebsocket\\Laravel\\NeotelServiceProvider"
+            ]
+        }
+    },
     "authors": [
         {
             "name": "Josh Rudesill",
