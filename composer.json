@@ -1,0 +1,19 @@
+{
+    "name": "vendor/neotel-websocket",
+    "description": "Neotel websocket client + Laravel integration",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Vendor\\NeotelWebsocket\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Josh Rudesill",
+            "email": "joshrudesill@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
