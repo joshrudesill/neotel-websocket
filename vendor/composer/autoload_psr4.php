@@ -6,5 +6,13 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'WebSocket\\' => array($vendorDir . '/textalk/websocket/lib'),
+    'Vendor\\NeotelWebsocket\\Tests\\' => array($baseDir . '/tests'),
     'Vendor\\NeotelWebsocket\\' => array($baseDir . '/src'),
+    'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
+    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-factory/src', $vendorDir . '/psr/http-message/src'),
+    'Phrity\\Util\\' => array($vendorDir . '/phrity/util-errorhandler/src'),
+    'Phrity\\Net\\' => array($vendorDir . '/phrity/net-uri/src'),
+    'PhpParser\\' => array($vendorDir . '/nikic/php-parser/lib/PhpParser'),
+    'DeepCopy\\' => array($vendorDir . '/myclabs/deep-copy/src/DeepCopy'),
 );
