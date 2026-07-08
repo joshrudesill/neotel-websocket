@@ -3,6 +3,10 @@
     "description": "Neotel websocket client + Laravel integration",
     "type": "library",
     "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-json": "*"
+    },
     "autoload": {
         "psr-4": {
             "Vendor\\NeotelWebsocket\\": "src/"
@@ -14,6 +18,6 @@
             "email": "joshrudesill@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
-    "require": {}
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
