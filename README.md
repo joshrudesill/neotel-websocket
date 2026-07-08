@@ -61,7 +61,8 @@ NEOTEL_ENABLED=true
 NEOTEL_WEBSOCKET_URL=wss://ix3.neotel2000.com:10000/agent
 NEOTEL_USER=your-user
 NEOTEL_PASSWORD=your-password
-NEOTEL_RECORD_CALL_EVENTS=true
+NEOTEL_EVENTS=true
+NEOTEL_DB=true
 ```
 
 Run listener:
@@ -70,8 +71,15 @@ Run listener:
 php artisan neotel:listen
 ```
 
-When a call event is recorded, the package dispatches:
+Call event handling toggles:
+
+- `NEOTEL_EVENTS=true` dispatches Laravel events to your listeners.
+- `NEOTEL_DB=true` persists call events into `neotel_call_events`.
+
+You can enable either one independently or both together.
+
+When enabled, the package dispatches:
 
 - `Vendor\\NeotelWebsocket\\Laravel\\Events\\NeotelCallEventRecorded`
 
-This lets consumers register listeners/subscribers and implement custom handling without changing package internals.
+When `NEOTEL_DB=false`, the event still dispatches and the event `record` property is `null`.

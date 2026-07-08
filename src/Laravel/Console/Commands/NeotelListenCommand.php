@@ -40,13 +40,18 @@ class NeotelListenCommand extends Command
         $this->line(sprintf('Max events: %d', $maxEvents));
 
         $channel = config('neotel-websocket.log_channel');
-        $recordCallEvents = (bool) config('neotel-websocket.record_call_events', true);
+        $dispatchEvents = (bool) config('neotel-websocket.events_enabled', true);
+        $persistEventsToDatabase = (bool) config('neotel-websocket.db_enabled', true);
 
         try {
-            $client->listen(function (array $payload, string $rawFrame, string $connectionId) use ($channel, $recordCallEvents, $recorder): void {
-                if ($recordCallEvents) {
-                    $recorder->record($payload, $rawFrame, $connectionId);
-                }
+            $client->listen(function (array $payload, string $rawFrame, string $connectionId) use ($channel, $dispatchEvents, $persistEventsToDatabase, $recorder): void {
+                $recorder->record(
+                    $payload,
+                    $rawFrame,
+                    $connectionId,
+                    persistToDatabase: $persistEventsToDatabase,
+                    dispatchLaravelEvent: $dispatchEvents,
+                );
 
                 $type = (string) ($payload['type'] ?? 'unknown');
                 $server = (string) ($payload['server'] ?? 'n/a');

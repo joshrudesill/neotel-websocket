@@ -11,5 +11,6 @@ return [
     'max_backoff_seconds' => max(1, (int) env('NEOTEL_MAX_BACKOFF_SECONDS', 30)),
     'user_agent' => env('NEOTEL_USER_AGENT', 'vendor-neotel-websocket/0.1'),
     'log_channel' => env('NEOTEL_LOG_CHANNEL', null),
-    'record_call_events' => (bool) env('NEOTEL_RECORD_CALL_EVENTS', true),
+    'events_enabled' => (bool) env('NEOTEL_EVENTS', env('NEOTEL_RECORD_CALL_EVENTS', true)),
+    'db_enabled' => (bool) env('NEOTEL_DB', true),
 ];

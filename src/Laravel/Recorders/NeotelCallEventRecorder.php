@@ -11,7 +11,13 @@ class NeotelCallEventRecorder
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function record(array $payload, string $rawFrame, string $connectionId): ?NeotelCallEvent
+    public function record(
+        array $payload,
+        string $rawFrame,
+        string $connectionId,
+        bool $persistToDatabase = true,
+        bool $dispatchLaravelEvent = true,
+    ): ?NeotelCallEvent
     {
         if (! $this->isCallEvent($payload)) {
             return null;
@@ -22,21 +28,31 @@ class NeotelCallEventRecorder
             return null;
         }
 
-        $record = NeotelCallEvent::query()->create([
-            'connection_id' => $connectionId,
-            'callid' => $callid,
-            'action' => $this->stringValue($payload, ['action']) ?? 'unknown',
-            'server_name' => $this->stringValue($payload, ['server']),
-            'extension' => $this->stringValue($payload, ['extension']),
-            'state_code' => $this->stringValue($payload, ['state']),
-            'state_desc' => $this->stringValue($payload, ['statedesc']),
-            'cause' => $this->stringValue($payload, ['cause']),
-            'payload' => NeotelClient::redactSensitive($payload),
-            'raw_payload' => $rawFrame,
-            'occurred_at' => now(),
-        ]);
+        if (! $persistToDatabase && ! $dispatchLaravelEvent) {
+            return null;
+        }
 
-        event(new NeotelCallEventRecorded($record, $payload, $rawFrame, $connectionId));
+        $record = null;
+
+        if ($persistToDatabase) {
+            $record = NeotelCallEvent::query()->create([
+                'connection_id' => $connectionId,
+                'callid' => $callid,
+                'action' => $this->stringValue($payload, ['action']) ?? 'unknown',
+                'server_name' => $this->stringValue($payload, ['server']),
+                'extension' => $this->stringValue($payload, ['extension']),
+                'state_code' => $this->stringValue($payload, ['state']),
+                'state_desc' => $this->stringValue($payload, ['statedesc']),
+                'cause' => $this->stringValue($payload, ['cause']),
+                'payload' => NeotelClient::redactSensitive($payload),
+                'raw_payload' => $rawFrame,
+                'occurred_at' => now(),
+            ]);
+        }
+
+        if ($dispatchLaravelEvent) {
+            event(new NeotelCallEventRecorded($record, $payload, $rawFrame, $connectionId));
+        }
 
         return $record;
     }

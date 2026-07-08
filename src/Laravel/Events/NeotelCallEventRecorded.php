@@ -15,7 +15,7 @@ class NeotelCallEventRecorded
      * @param  array<string, mixed>  $payload
      */
     public function __construct(
-        public readonly NeotelCallEvent $record,
+        public readonly ?NeotelCallEvent $record,
         public readonly array $payload,
         public readonly string $rawFrame,
         public readonly string $connectionId,
