@@ -1,1 +1,0 @@
-{"version":2,"defects":[],"times":{"Vendor\\NeotelWebsocket\\Tests\\NeotelClientTest::test_listen_processes_event_after_welcome_and_auth":0.001,"Vendor\\NeotelWebsocket\\Tests\\NeotelClientTest::test_listen_reconnects_after_initial_connection_failure":1.005}}
