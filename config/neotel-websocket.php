@@ -13,4 +13,6 @@ return [
     'log_channel' => env('NEOTEL_LOG_CHANNEL', null),
     'events_enabled' => (bool) env('NEOTEL_EVENTS', env('NEOTEL_RECORD_CALL_EVENTS', true)),
     'db_enabled' => (bool) env('NEOTEL_DB', true),
+    'register_command' => (bool) env('NEOTEL_REGISTER_COMMAND', true),
+    'load_migrations' => (bool) env('NEOTEL_LOAD_MIGRATIONS', true),
 ];

@@ -49,10 +49,14 @@ class NeotelServiceProvider extends ServiceProvider
             __DIR__.'/../../database/migrations/' => database_path('migrations'),
         ], 'neotel-websocket-migrations');
 
-        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+        if ((bool) config('neotel-websocket.load_migrations', true)) {
+            $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+        }
 
-        $this->commands([
-            NeotelListenCommand::class,
-        ]);
+        if ((bool) config('neotel-websocket.register_command', true)) {
+            $this->commands([
+                NeotelListenCommand::class,
+            ]);
+        }
     }
 }

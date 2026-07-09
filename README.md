@@ -63,6 +63,8 @@ NEOTEL_USER=your-user
 NEOTEL_PASSWORD=your-password
 NEOTEL_EVENTS=true
 NEOTEL_DB=true
+NEOTEL_REGISTER_COMMAND=true
+NEOTEL_LOAD_MIGRATIONS=true
 ```
 
 Run listener:
@@ -75,8 +77,12 @@ Call event handling toggles:
 
 - `NEOTEL_EVENTS=true` dispatches Laravel events to your listeners.
 - `NEOTEL_DB=true` persists call events into `neotel_call_events`.
+- `NEOTEL_REGISTER_COMMAND=true` registers the package's `neotel:listen` command.
+- `NEOTEL_LOAD_MIGRATIONS=true` loads the package migrations automatically.
 
 You can enable either one independently or both together.
+If your app already defines its own `neotel:listen` command, set `NEOTEL_REGISTER_COMMAND=false` before enabling the package provider.
+If your app already has the Neotel tables, set `NEOTEL_LOAD_MIGRATIONS=false` to avoid duplicate migration work.
 
 When enabled, the package dispatches:
 
