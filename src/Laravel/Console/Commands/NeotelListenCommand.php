@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelCallEventRecorder;
+use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelSystemEventRecorder;
 use Vendor\NeotelWebsocket\NeotelClient;
 use Vendor\NeotelWebsocket\NeotelConfig;
 
@@ -17,7 +18,7 @@ class NeotelListenCommand extends Command
 
     protected $description = 'Connect to Neotel websocket, authenticate, and stream events.';
 
-    public function handle(NeotelClient $client, NeotelConfig $config, NeotelCallEventRecorder $recorder): int
+    public function handle(NeotelClient $client, NeotelConfig $config, NeotelCallEventRecorder $callEventRecorder, NeotelSystemEventRecorder $systemEventRecorder): int
     {
         if (! (bool) config('neotel-websocket.enabled', false)) {
             $this->error('Neotel listener is disabled. Set NEOTEL_ENABLED=true to run this command.');
@@ -44,8 +45,16 @@ class NeotelListenCommand extends Command
         $persistEventsToDatabase = (bool) config('neotel-websocket.db_enabled', true);
 
         try {
-            $client->listen(function (array $payload, string $rawFrame, string $connectionId) use ($channel, $dispatchEvents, $persistEventsToDatabase, $recorder): void {
-                $recorder->record(
+            $client->listen(function (array $payload, string $rawFrame, string $connectionId) use ($channel, $dispatchEvents, $persistEventsToDatabase, $callEventRecorder, $systemEventRecorder): void {
+                $callEventRecorder->record(
+                    $payload,
+                    $rawFrame,
+                    $connectionId,
+                    persistToDatabase: $persistEventsToDatabase,
+                    dispatchLaravelEvent: $dispatchEvents,
+                );
+
+                $systemEventRecorder->record(
                     $payload,
                     $rawFrame,
                     $connectionId,

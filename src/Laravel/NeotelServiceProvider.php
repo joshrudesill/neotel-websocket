@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Vendor\NeotelWebsocket\Contracts\WebSocketTransportInterface;
 use Vendor\NeotelWebsocket\Laravel\Console\Commands\NeotelListenCommand;
 use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelCallEventRecorder;
+use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelSystemEventRecorder;
 use Vendor\NeotelWebsocket\NeotelClient;
 use Vendor\NeotelWebsocket\NeotelConfig;
 use Vendor\NeotelWebsocket\Transport\TextalkWebSocketTransport;
@@ -33,6 +34,8 @@ class NeotelServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(NeotelCallEventRecorder::class);
+
+        $this->app->singleton(NeotelSystemEventRecorder::class);
     }
 
     public function boot(): void
