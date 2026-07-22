@@ -20,14 +20,21 @@ class NeotelListenCommand extends Command
 
     public function handle(NeotelClient $client, NeotelConfig $config, NeotelCallEventRecorder $callEventRecorder, NeotelSystemEventRecorder $systemEventRecorder): int
     {
+        $shouldOutput = ! app()->environment('production');
+        $shouldLogEvents = ! app()->environment('production');
+
         if (! (bool) config('neotel-websocket.enabled', false)) {
-            $this->error('Neotel listener is disabled. Set NEOTEL_ENABLED=true to run this command.');
+            if ($shouldOutput) {
+                $this->error('Neotel listener is disabled. Set NEOTEL_ENABLED=true to run this command.');
+            }
 
             return self::FAILURE;
         }
 
         if ($config->websocketUrl === '' || $config->user === '' || $config->password === '') {
-            $this->error('NEOTEL_WEBSOCKET_URL, NEOTEL_USER, and NEOTEL_PASSWORD must all be configured.');
+            if ($shouldOutput) {
+                $this->error('NEOTEL_WEBSOCKET_URL, NEOTEL_USER, and NEOTEL_PASSWORD must all be configured.');
+            }
 
             return self::FAILURE;
         }
@@ -35,17 +42,19 @@ class NeotelListenCommand extends Command
         $maxEvents = max(0, (int) $this->option('max-events'));
         $maxReconnectAttempts = max(0, (int) $this->option('max-reconnect-attempts'));
 
-        $this->info('Starting Neotel listener...');
-        $this->line(sprintf('Endpoint: %s', $config->websocketUrl));
-        $this->line(sprintf('User: %s', $config->user));
-        $this->line(sprintf('Max events: %d', $maxEvents));
+        if ($shouldOutput) {
+            $this->info('Starting Neotel listener...');
+            $this->line(sprintf('Endpoint: %s', $config->websocketUrl));
+            $this->line(sprintf('User: %s', $config->user));
+            $this->line(sprintf('Max events: %d', $maxEvents));
+        }
 
         $channel = config('neotel-websocket.log_channel');
         $dispatchEvents = (bool) config('neotel-websocket.events_enabled', true);
         $persistEventsToDatabase = (bool) config('neotel-websocket.db_enabled', true);
 
         try {
-            $client->listen(function (array $payload, string $rawFrame, string $connectionId) use ($channel, $dispatchEvents, $persistEventsToDatabase, $callEventRecorder, $systemEventRecorder): void {
+            $client->listen(function (array $payload, string $rawFrame, string $connectionId) use ($channel, $dispatchEvents, $persistEventsToDatabase, $callEventRecorder, $systemEventRecorder, $shouldOutput, $shouldLogEvents): void {
                 $callEventRecorder->record(
                     $payload,
                     $rawFrame,
@@ -68,30 +77,38 @@ class NeotelListenCommand extends Command
                 $actionSegment = $action !== '' ? sprintf(' action=%s', $action) : '';
 
                 $line = sprintf('[%s] event=%s%s server=%s', now()->toDateTimeString(), $type, $actionSegment, $server);
-                $this->line($line);
-
-                $context = [
-                    'connection_id' => $connectionId,
-                    'event_type' => $type,
-                    'server' => $server,
-                    'payload' => NeotelClient::redactSensitive($payload),
-                    'raw_payload' => $rawFrame,
-                ];
-
-                if (is_string($channel) && $channel !== '') {
-                    Log::channel($channel)->info('Neotel event received.', $context);
-
-                    return;
+                if ($shouldOutput) {
+                    $this->line($line);
                 }
 
-                Log::info('Neotel event received.', $context);
+                if ($shouldLogEvents) {
+                    $context = [
+                        'connection_id' => $connectionId,
+                        'event_type' => $type,
+                        'server' => $server,
+                        'payload' => NeotelClient::redactSensitive($payload),
+                        'raw_payload' => $rawFrame,
+                    ];
+
+                    if (is_string($channel) && $channel !== '') {
+                        Log::channel($channel)->info('Neotel event received.', $context);
+
+                        return;
+                    }
+
+                    Log::info('Neotel event received.', $context);
+                }
             }, $maxEvents, $maxReconnectAttempts);
 
-            $this->info('Neotel listener finished successfully.');
+            if ($shouldOutput) {
+                $this->info('Neotel listener finished successfully.');
+            }
 
             return self::SUCCESS;
         } catch (Throwable $exception) {
-            $this->error('Neotel listener failed: '.$exception->getMessage());
+            if ($shouldOutput) {
+                $this->error('Neotel listener failed: '.$exception->getMessage());
+            }
 
             return self::FAILURE;
         }
