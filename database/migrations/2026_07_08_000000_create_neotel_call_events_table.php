@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('neotel_call_events')) {
+            return;
+        }
+
         Schema::create('neotel_call_events', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->string('connection_id', 64)->nullable();
