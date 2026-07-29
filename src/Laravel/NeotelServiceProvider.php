@@ -20,12 +20,6 @@ class NeotelServiceProvider extends ServiceProvider
 
         $this->app->singleton(NeotelSettingsRepository::class);
 
-        /** @var array<string, mixed> $runtimeConfig */
-        $runtimeConfig = (array) $this->app['config']->get('neotel-websocket', []);
-        /** @var array<string, mixed> $persistedConfig */
-        $persistedConfig = $this->app->make(NeotelSettingsRepository::class)->all();
-        $this->app['config']->set('neotel-websocket', array_merge($runtimeConfig, $persistedConfig));
-
         $this->app->singleton(WebSocketTransportInterface::class, TextalkWebSocketTransport::class);
 
         $this->app->singleton(NeotelConfig::class, function ($app): NeotelConfig {
@@ -49,6 +43,12 @@ class NeotelServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        /** @var array<string, mixed> $runtimeConfig */
+        $runtimeConfig = (array) $this->app['config']->get('neotel-websocket', []);
+        /** @var array<string, mixed> $persistedConfig */
+        $persistedConfig = $this->app->make(NeotelSettingsRepository::class)->all();
+        $this->app['config']->set('neotel-websocket', array_merge($runtimeConfig, $persistedConfig));
+
         $this->loadRoutesFrom(__DIR__.'/../../routes/neotel-websocket.php');
 
         if ($this->app->runningInConsole()) {
