@@ -83,11 +83,11 @@ class NeotelClient
         $connectionId = $connectionId ?: self::generateConnectionId();
 
         if ($url === '') {
-            throw new NeotelConnectionException('NEOTEL_WEBSOCKET_URL is required.');
+            throw new NeotelConnectionException('A websocket URL is required.');
         }
 
         if ($user === '' || $password === '') {
-            throw new NeotelConnectionException('Both NEOTEL_USER and NEOTEL_PASSWORD are required.');
+            throw new NeotelConnectionException('Both user and password are required.');
         }
 
         $connection = $this->transport->connect($url, [

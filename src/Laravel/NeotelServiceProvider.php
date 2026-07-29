@@ -7,6 +7,7 @@ use Vendor\NeotelWebsocket\Contracts\WebSocketTransportInterface;
 use Vendor\NeotelWebsocket\Laravel\Console\Commands\NeotelListenCommand;
 use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelCallEventRecorder;
 use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelSystemEventRecorder;
+use Vendor\NeotelWebsocket\Laravel\Support\NeotelSettingsRepository;
 use Vendor\NeotelWebsocket\NeotelClient;
 use Vendor\NeotelWebsocket\NeotelConfig;
 use Vendor\NeotelWebsocket\Transport\TextalkWebSocketTransport;
@@ -16,6 +17,14 @@ class NeotelServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../../config/neotel-websocket.php', 'neotel-websocket');
+
+        $this->app->singleton(NeotelSettingsRepository::class);
+
+        /** @var array<string, mixed> $runtimeConfig */
+        $runtimeConfig = (array) $this->app['config']->get('neotel-websocket', []);
+        /** @var array<string, mixed> $persistedConfig */
+        $persistedConfig = $this->app->make(NeotelSettingsRepository::class)->all();
+        $this->app['config']->set('neotel-websocket', array_merge($runtimeConfig, $persistedConfig));
 
         $this->app->singleton(WebSocketTransportInterface::class, TextalkWebSocketTransport::class);
 
@@ -40,23 +49,23 @@ class NeotelServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (! $this->app->runningInConsole()) {
-            return;
+        $this->loadRoutesFrom(__DIR__.'/../../routes/neotel-websocket.php');
+
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../../config/neotel-websocket.php' => config_path('neotel-websocket.php'),
+            ], 'neotel-websocket-config');
+
+            $this->publishes([
+                __DIR__.'/../../database/migrations/' => database_path('migrations'),
+            ], 'neotel-websocket-migrations');
         }
-
-        $this->publishes([
-            __DIR__.'/../../config/neotel-websocket.php' => config_path('neotel-websocket.php'),
-        ], 'neotel-websocket-config');
-
-        $this->publishes([
-            __DIR__.'/../../database/migrations/' => database_path('migrations'),
-        ], 'neotel-websocket-migrations');
 
         if ((bool) config('neotel-websocket.load_migrations', true)) {
             $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         }
 
-        if ((bool) config('neotel-websocket.register_command', true)) {
+        if ($this->app->runningInConsole() && (bool) config('neotel-websocket.register_command', true)) {
             $this->commands([
                 NeotelListenCommand::class,
             ]);

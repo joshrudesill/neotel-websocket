@@ -25,7 +25,7 @@ class NeotelListenCommand extends Command
 
         if (! (bool) config('neotel-websocket.enabled', false)) {
             if ($shouldOutput) {
-                $this->error('Neotel listener is disabled. Set NEOTEL_ENABLED=true to run this command.');
+                $this->error('Neotel listener is disabled. Update the Neotel configuration to enable it.');
             }
 
             return self::FAILURE;
@@ -33,7 +33,7 @@ class NeotelListenCommand extends Command
 
         if ($config->websocketUrl === '' || $config->user === '' || $config->password === '') {
             if ($shouldOutput) {
-                $this->error('NEOTEL_WEBSOCKET_URL, NEOTEL_USER, and NEOTEL_PASSWORD must all be configured.');
+                $this->error('websocket_url, user, and password must all be configured.');
             }
 
             return self::FAILURE;
