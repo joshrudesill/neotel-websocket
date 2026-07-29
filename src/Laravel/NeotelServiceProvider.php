@@ -46,10 +46,12 @@ class NeotelServiceProvider extends ServiceProvider
         /** @var array<string, mixed> $runtimeConfig */
         $runtimeConfig = (array) $this->app['config']->get('neotel-websocket', []);
         /** @var array<string, mixed> $persistedConfig */
-        $persistedConfig = $this->app->make(NeotelSettingsRepository::class)->all();
+        $persistedConfig = $this->app->make(NeotelSettingsRepository::class)->stored();
         $this->app['config']->set('neotel-websocket', array_merge($runtimeConfig, $persistedConfig));
 
-        $this->loadRoutesFrom(__DIR__.'/../../routes/neotel-websocket.php');
+        if ((bool) config('neotel-websocket.register_routes', true)) {
+            $this->loadRoutesFrom(__DIR__.'/../../routes/neotel-websocket.php');
+        }
 
         if ($this->app->runningInConsole()) {
             $this->publishes([

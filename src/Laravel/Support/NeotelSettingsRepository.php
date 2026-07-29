@@ -12,12 +12,10 @@ class NeotelSettingsRepository
     /**
      * @return array<string, mixed>
      */
-    public function all(): array
+    public function stored(): array
     {
-        $defaults = NeotelSettings::defaults();
-
         if (! $this->tableExists()) {
-            return $defaults;
+            return [];
         }
 
         $stored = NeotelSetting::query()
@@ -35,7 +33,15 @@ class NeotelSettingsRepository
             $typed[$key] = NeotelSettings::decode($key, is_string($value) || $value === null ? $value : (string) $value);
         }
 
-        return NeotelSettings::mergeWithDefaults($typed);
+        return $typed;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function all(): array
+    {
+        return NeotelSettings::mergeWithDefaults($this->stored());
     }
 
     /**

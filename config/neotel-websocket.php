@@ -15,5 +15,6 @@ return [
     'db_enabled' => true,
     'register_command' => true,
     'load_migrations' => true,
+    'register_routes' => true,
     'api_prefix' => 'api/neotel-websocket',
 ];
