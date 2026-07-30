@@ -40,14 +40,14 @@ class NeotelListenCommand extends Command
         NeotelSystemEventRecorder $systemEventRecorder,
         // NeotelListenerStatusManager $listenerStatus,
     ): int {
-        if (! (bool) config('neotel.enabled', false)) {
+        if (! (bool) config('neotel-websocket.enabled', false)) {
             // $listenerStatus->setStatus('disabled', 'Listener is disabled.', [
             //     'detail' => 'Enable Neotel before starting the listener.',
             //     'pid' => null,
             //     'heartbeat_at' => null,
             //     'websocket_url' => $config->websocketUrl !== '' ? $config->websocketUrl : null,
             // ]);
-            $this->error('Neotel listener is disabled. Set NEOTEL_ENABLED=true to run this command.');
+            $this->error('Neotel listener is disabled. Set neotel-websocket.enabled=true to run this command.');
 
             return self::FAILURE;
         }
