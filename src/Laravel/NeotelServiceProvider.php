@@ -7,6 +7,7 @@ use Vendor\NeotelWebsocket\Contracts\WebSocketTransportInterface;
 use Vendor\NeotelWebsocket\Laravel\Console\Commands\NeotelListenCommand;
 use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelCallEventRecorder;
 use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelSystemEventRecorder;
+use Vendor\NeotelWebsocket\Laravel\Support\NeotelListenerStatusManager;
 use Vendor\NeotelWebsocket\Laravel\Support\NeotelSettingsRepository;
 use Vendor\NeotelWebsocket\NeotelClient;
 use Vendor\NeotelWebsocket\NeotelConfig;
@@ -19,6 +20,8 @@ class NeotelServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../../config/neotel-websocket.php', 'neotel-websocket');
 
         $this->app->singleton(NeotelSettingsRepository::class);
+
+        $this->app->singleton(NeotelListenerStatusManager::class);
 
         $this->app->singleton(WebSocketTransportInterface::class, TextalkWebSocketTransport::class);
 

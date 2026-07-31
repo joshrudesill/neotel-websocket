@@ -1,11 +1,11 @@
 <?php
 namespace Vendor\NeotelWebsocket\Laravel\Console\Commands;
 
-// use App\Services\Integrations\Neotel\NeotelListenerStatusManager;
 use Illuminate\Console\Command;
 use Throwable;
 use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelCallEventRecorder;
 use Vendor\NeotelWebsocket\Laravel\Recorders\NeotelSystemEventRecorder;
+use Vendor\NeotelWebsocket\Laravel\Support\NeotelListenerStatusManager;
 use Vendor\NeotelWebsocket\NeotelClient;
 use Vendor\NeotelWebsocket\NeotelConfig;
 
@@ -38,27 +38,27 @@ class NeotelListenCommand extends Command
         NeotelConfig $config,
         NeotelCallEventRecorder $callEventRecorder,
         NeotelSystemEventRecorder $systemEventRecorder,
-        // NeotelListenerStatusManager $listenerStatus,
+        NeotelListenerStatusManager $listenerStatus,
     ): int {
         if (! (bool) config('neotel-websocket.enabled', false)) {
-            // $listenerStatus->setStatus('disabled', 'Listener is disabled.', [
-            //     'detail' => 'Enable Neotel before starting the listener.',
-            //     'pid' => null,
-            //     'heartbeat_at' => null,
-            //     'websocket_url' => $config->websocketUrl !== '' ? $config->websocketUrl : null,
-            // ]);
+            $listenerStatus->setStatus('disabled', 'Listener is disabled.', [
+                'detail' => 'Enable Neotel before starting the listener.',
+                'pid' => null,
+                'heartbeat_at' => null,
+                'websocket_url' => $config->websocketUrl !== '' ? $config->websocketUrl : null,
+            ]);
             $this->error('Neotel listener is disabled. Set neotel-websocket.enabled=true to run this command.');
 
             return self::FAILURE;
         }
 
         if ($config->websocketUrl === '' || $config->user === '' || $config->password === '') {
-            // $listenerStatus->setStatus('misconfigured', 'Listener credentials are incomplete.', [
-            //     'detail' => 'websocket_url, user, and password must all be configured.',
-            //     'pid' => null,
-            //     'heartbeat_at' => null,
-            //     'websocket_url' => $config->websocketUrl !== '' ? $config->websocketUrl : null,
-            // ]);
+            $listenerStatus->setStatus('misconfigured', 'Listener credentials are incomplete.', [
+                'detail' => 'websocket_url, user, and password must all be configured.',
+                'pid' => null,
+                'heartbeat_at' => null,
+                'websocket_url' => $config->websocketUrl !== '' ? $config->websocketUrl : null,
+            ]);
             $this->error('NEOTEL_WEBSOCKET_URL, NEOTEL_USER, and NEOTEL_PASSWORD must all be configured.');
 
             return self::FAILURE;
@@ -81,41 +81,44 @@ class NeotelListenCommand extends Command
         // package's raw persistence expects.
         $dispatchEvents = (bool) config('neotel-websocket.events_enabled', true);
 
-        // $listenerStatus->setStatus('connecting', 'Connecting to Neotel websocket…', [
-        //     'detail' => 'Starting websocket handshake.',
-        //     'pid' => getmypid() ?: null,
-        //     'heartbeat_at' => null,
-        //     'last_event_type' => null,
-        //     'last_event_action' => null,
-        //     'websocket_url' => $config->websocketUrl,
-        // ]);
+        $listenerStatus->setStatus('connecting', 'Connecting to Neotel websocket...', [
+            'detail' => 'Starting websocket handshake.',
+            'pid' => getmypid() ?: null,
+            'heartbeat_at' => null,
+            'last_event_type' => null,
+            'last_event_action' => null,
+            'websocket_url' => $config->websocketUrl,
+        ]);
 
         try {
-            $client->listen(function (array $payload, string $rawFrame, string $connectionId) use ($callEventRecorder, $systemEventRecorder, $dispatchEvents): void {
+            $client->listen(function (array $payload, string $rawFrame, string $connectionId) use ($callEventRecorder, $systemEventRecorder, $listenerStatus, $dispatchEvents): void {
                 $type = (string) ($payload['type'] ?? 'unknown');
                 $action = (string) ($payload['action'] ?? '');
 
                 if ($type === 'welcome') {
-                    // $listenerStatus->setStatus('authenticating', 'Authenticating with Neotel…', [
-                    //     'pid' => getmypid() ?: null,
-                    //     'last_event_type' => $type,
-                    //     'last_event_action' => $action !== '' ? $action : null,
-                    // ]);
+                    $listenerStatus->setStatus('authenticating', 'Authenticating with Neotel...', [
+                        'detail' => null,
+                        'pid' => getmypid() ?: null,
+                        'last_event_type' => $type,
+                        'last_event_action' => $action !== '' ? $action : null,
+                    ]);
                 } elseif (($type === 'auth-ok' || $type === 'auth-resp') && ! NeotelClient::isLikelyAuthFailure($payload)) {
-                    // $listenerStatus->setStatus('connected', 'Listener connected.', [
-                    //     'pid' => getmypid() ?: null,
-                    //     'last_event_type' => $type,
-                    //     'last_event_action' => $action !== '' ? $action : null,
-                    // ]);
-                    // $listenerStatus->touchHeartbeat();
+                    $listenerStatus->setStatus('connected', 'Listener connected.', [
+                        'detail' => null,
+                        'pid' => getmypid() ?: null,
+                        'last_event_type' => $type,
+                        'last_event_action' => $action !== '' ? $action : null,
+                    ]);
+                    $listenerStatus->touchHeartbeat();
                 } else {
-                    // $listenerStatus->touchHeartbeat([
-                    //     'state' => 'connected',
-                    //     'message' => 'Listener connected.',
-                    //     'pid' => getmypid() ?: null,
-                    //     'last_event_type' => $type,
-                    //     'last_event_action' => $action !== '' ? $action : null,
-                    // ]);
+                    $listenerStatus->touchHeartbeat([
+                        'state' => 'connected',
+                        'message' => 'Listener connected.',
+                        'detail' => null,
+                        'pid' => getmypid() ?: null,
+                        'last_event_type' => $type,
+                        'last_event_action' => $action !== '' ? $action : null,
+                    ]);
                 }
 
                 if ($type === 'update' && in_array($action, self::CALL_ACTIONS, true)) {
@@ -144,17 +147,17 @@ class NeotelListenCommand extends Command
 
             $this->info('Neotel listener finished successfully.');
 
-            // $listenerStatus->setStatus('stopped', 'Listener stopped.', [
-            //     'detail' => 'The listener process exited normally.',
-            //     'pid' => null,
-            // ]);
+            $listenerStatus->setStatus('stopped', 'Listener stopped.', [
+                'detail' => 'The listener process exited normally.',
+                'pid' => null,
+            ]);
 
             return self::SUCCESS;
         } catch (Throwable $exception) {
-            // $listenerStatus->setStatus('failed', 'Listener failed.', [
-            //     'detail' => $exception->getMessage(),
-            //     'pid' => null,
-            // ]);
+            $listenerStatus->setStatus('failed', 'Listener failed.', [
+                'detail' => $exception->getMessage(),
+                'pid' => null,
+            ]);
             $this->error('Neotel listener failed: '.$exception->getMessage());
 
             return self::FAILURE;

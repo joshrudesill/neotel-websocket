@@ -23,6 +23,8 @@ independent of any specific application's domain logic.
 - Raw persistence (`NEOTEL_DB`) and Laravel event dispatch (`NEOTEL_EVENTS`) are independent
   toggles, so a consuming app can dispatch-only (and own its own tables/projections) without
   the package writing anything to the database.
+- Optional cache-backed listener status tracks command lifecycle and heartbeat freshness,
+  dispatches transition events, and can expose a read-only status endpoint.
 
 ## Requirements
 
@@ -131,6 +133,10 @@ without publishing. Environment variables:
 | `NEOTEL_DB` | `true` | Persist raw events via the package's own Eloquent models. |
 | `NEOTEL_REGISTER_COMMAND` | `true` | Register the package's `neotel:listen` command. Set `false` if your app defines its own. |
 | `NEOTEL_LOAD_MIGRATIONS` | `true` | Auto-load the package's migrations. Set `false` if your app already owns the tables. |
+| `NEOTEL_STATUS_ENABLED` | `false` | Cache listener lifecycle and heartbeat status. |
+| `NEOTEL_STATUS_ROUTE_ENABLED` | `false` | Register `GET /api/neotel-websocket/listener/status`. |
+| `NEOTEL_STATUS_CACHE_KEY` | `neotel:listener:status` | Cache key containing the latest listener snapshot. |
+| `NEOTEL_STATUS_CACHE_TTL_SECONDS` | `120` | Number of seconds before an unrefreshed status expires. |
 
 `NEOTEL_EVENTS` and `NEOTEL_DB` are independent — enable either one alone, both together, or
 neither. If `NEOTEL_DB=false`, dispatched events still fire but their `record` property is
@@ -172,6 +178,47 @@ class HandleNeotelCallEvent
     }
 }
 ```
+
+### Listener status
+
+Enable cache-backed listener monitoring in the consuming application:
+
+```dotenv
+NEOTEL_STATUS_ENABLED=true
+NEOTEL_STATUS_ROUTE_ENABLED=true
+```
+
+The command records `disabled`, `misconfigured`, `connecting`, `authenticating`, `connected`,
+`stopped`, and `failed` transitions. Frames refresh `heartbeat_at` without dispatching another
+transition event. A typical status response is:
+
+```json
+{
+  "data": {
+    "state": "connected",
+    "message": "Listener connected.",
+    "detail": null,
+    "pid": 12345,
+    "updated_at": "2026-07-31T12:00:00+00:00",
+    "heartbeat_at": "2026-07-31T12:00:00+00:00",
+    "last_event_type": "update",
+    "last_event_action": "call-state",
+    "websocket_url": "wss://pbx.example.test/socket"
+  }
+}
+```
+
+The endpoint has no middleware by default. Protect it using the published config:
+
+```php
+'status_route_middleware' => ['auth:sanctum'],
+```
+
+Each lifecycle transition dispatches
+`Vendor\NeotelWebsocket\Laravel\Events\NeotelListenerStatusChanged`. Consuming applications
+can listen for that event to persist history, broadcast state changes, or integrate external
+monitoring without changing the package command. For shared process visibility, use a shared
+cache backend such as Redis rather than a process-local cache store.
 
 ### Recorders
 

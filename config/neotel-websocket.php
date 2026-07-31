@@ -17,4 +17,9 @@ return [
     'load_migrations' => true,
     'register_routes' => true,
     'api_prefix' => 'api/neotel-websocket',
+    'status_enabled' => env('NEOTEL_STATUS_ENABLED', false),
+    'status_route_enabled' => env('NEOTEL_STATUS_ROUTE_ENABLED', false),
+    'status_route_middleware' => [],
+    'status_cache_key' => env('NEOTEL_STATUS_CACHE_KEY', 'neotel:listener:status'),
+    'status_cache_ttl_seconds' => env('NEOTEL_STATUS_CACHE_TTL_SECONDS', 120),
 ];
